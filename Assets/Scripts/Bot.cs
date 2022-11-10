@@ -6,8 +6,16 @@ public class Bot : MonoBehaviour
 {
     public CardPlayer botPlayer;
     public CardPlayer otherPlayer;
+    public Stats stats;
 
     Card[] cards;
+
+    public void SetStats(Stats newStats)
+    {
+        stats = newStats;
+        botPlayer.nameText.text = stats.Name + " Bot";
+        botPlayer.SetStats(stats, true);
+    }
 
     private void Start()
     {

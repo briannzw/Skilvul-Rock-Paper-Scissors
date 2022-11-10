@@ -1,7 +1,7 @@
 [System.Serializable]
 public enum Move
 {
-    Rock,
-    Paper,
-    Scissors
+    Rock = 0,
+    Paper = 1,
+    Scissors = 2
 }

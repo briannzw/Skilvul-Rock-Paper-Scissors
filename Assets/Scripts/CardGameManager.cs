@@ -10,8 +10,6 @@ using UnityEngine.SceneManagement;
 public class CardGameManager : MonoBehaviour, IOnEventCallback
 {
     public CardPlayer P1, P2;
-    public int damageValue = 10;
-    public int restoreValue = 5;
     public GameState currentState, nextState = GameState.NetPlayerInitialization;
     public GameObject gameOverPanel;
     public TMP_Text gameOverText;
@@ -20,6 +18,7 @@ public class CardGameManager : MonoBehaviour, IOnEventCallback
     public int scorePerWin = 100;
 
     private CardPlayer winner, loser;
+    private Stats defaultPlayerStats = new Stats();
 
     HashSet<int> syncReadyPlayers = new HashSet<int>(2);
 
@@ -37,13 +36,25 @@ public class CardGameManager : MonoBehaviour, IOnEventCallback
     private void Start()
     {
         gameOverPanel.SetActive(false);
-        InitializeRoomSettings();
+        defaultPlayerStats.MaxHealth = 100;
+        defaultPlayerStats.RestoreValue = 5;
+        defaultPlayerStats.DamageValue = 10;
+
         if (!isOnline)
         {
             P2.GetComponent<Bot>().enabled = true;
             currentState = GameState.ChooseMove;
+
+            P1.SetStats(defaultPlayerStats, true);
+            P2.SetStats(defaultPlayerStats, true);
             return;
         }
+        
+        InitializeRoomSettings();
+
+        P1.SetStats(defaultPlayerStats, true);
+        P2.SetStats(defaultPlayerStats, true);
+
         PhotonNetwork.Instantiate("CardNetPlayer", Vector3.zero, Quaternion.identity);
         StartCoroutine(CheckPing());
     }
@@ -53,20 +64,20 @@ public class CardGameManager : MonoBehaviour, IOnEventCallback
         if(PhotonNetwork.CurrentRoom.CustomProperties.TryGetValue(PropertyNames.Room.MaxHealth, out var healthValue))
         {
             P1.Health = (int)healthValue;
-            P1.MaxHealth = (int)healthValue;
+            P1.stats.MaxHealth = (int)healthValue;
             P1.UpdateHealthUI();
 
             P2.Health = (int)healthValue;
-            P2.MaxHealth = (int)healthValue;
+            P2.stats.MaxHealth = (int)healthValue;
             P2.UpdateHealthUI();
         }
         if (PhotonNetwork.CurrentRoom.CustomProperties.TryGetValue(PropertyNames.Room.DamageValue, out var damageValue))
         {
-            this.damageValue = (int)damageValue;
+            defaultPlayerStats.DamageValue = (int)damageValue;
         }
         if (PhotonNetwork.CurrentRoom.CustomProperties.TryGetValue(PropertyNames.Room.RestoreValue, out var restoreValue))
         {
-            this.restoreValue = (int)restoreValue;
+            defaultPlayerStats.RestoreValue = (int)restoreValue;
         }
     }
 
@@ -138,8 +149,8 @@ public class CardGameManager : MonoBehaviour, IOnEventCallback
                 {
                     if (P1.isAnimating() == false && P2.isAnimating() == false)
                     {
-                        winner.ChangeHealth(restoreValue);
-                        loser.ChangeHealth(-damageValue);
+                        winner.ChangeHealth(winner.stats.RestoreValue);
+                        loser.ChangeHealth(-winner.stats.DamageValue);
 
                         winner.ChangeConsecutiveWin(1);
                         loser.ChangeConsecutiveWin(-1);
@@ -293,5 +304,10 @@ public class CardGameManager : MonoBehaviour, IOnEventCallback
     public void LoadScene(int index)
     {
         SceneManager.LoadScene(index);
+    }
+
+    public void Restart()
+    {
+        SceneManager.LoadScene(SceneManager.GetActiveScene().buildIndex);
     }
 }

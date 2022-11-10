@@ -19,7 +19,7 @@ public class CardPlayer : MonoBehaviour
     public TMP_Text healthText;
 
     public int Health;
-    public int MaxHealth;
+    public Stats stats;
 
     public TMP_Text consecutiveText;
     public int consecutiveWin;
@@ -32,7 +32,7 @@ public class CardPlayer : MonoBehaviour
     private void Start()
     {
         consecutiveWin = 0;
-        Health = MaxHealth;
+        Health = stats.MaxHealth;
     }
 
     public void Reset()
@@ -42,6 +42,15 @@ public class CardPlayer : MonoBehaviour
             chosenCard.Reset();
         }
         chosenCard = null;
+    }
+    public void SetStats(Stats newStats, bool restoreFullHealth = false)
+    {
+        stats = newStats;
+        if (restoreFullHealth)
+        {
+            Health = newStats.MaxHealth;
+            UpdateHealthUI();
+        }
     }
 
     public Move? MoveValue
@@ -53,6 +62,7 @@ public class CardPlayer : MonoBehaviour
     {
         if(chosenCard != null)
         {
+            chosenCard.transform.DOKill();
             chosenCard.Reset();
         }
 
@@ -62,14 +72,14 @@ public class CardPlayer : MonoBehaviour
 
     public void UpdateHealthUI()
     {
-        healthText.text = Health.ToString() + "/" + MaxHealth.ToString();
-        healthBar.UpdateBar((float)Health / MaxHealth);
+        healthText.text = Health.ToString() + "/" + stats.MaxHealth.ToString();
+        healthBar.UpdateBar((float)Health / stats.MaxHealth);
     }
     
     public void ChangeHealth(int amount)
     {
         Health += amount;
-        Health = Math.Clamp(Health, 0, MaxHealth);
+        Health = Math.Clamp(Health, 0, stats.MaxHealth);
 
         UpdateHealthUI();
     }
